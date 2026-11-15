@@ -93,3 +93,40 @@ std::vector<float> GemmCUBLAS(const std::vector<float>& a,
     if (a.size() != elementCount || b.size() != elementCount) {
         throw std::invalid_argument("Input matrices must both contain n*n elements");
     }
+
+    std::vector<float> c(elementCount);
+    const std::size_t bytes = elementCount * sizeof(float);
+    DeviceBuffer deviceA(bytes);
+    DeviceBuffer deviceB(bytes);
+    DeviceBuffer deviceC(bytes);
+    CublasHandle handle;
+
+    CheckCuda(cudaMemcpy(deviceA.get(), a.data(), bytes, cudaMemcpyHostToDevice),
+              "cudaMemcpy A host-to-device");
+    CheckCuda(cudaMemcpy(deviceB.get(), b.data(), bytes, cudaMemcpyHostToDevice),
+              "cudaMemcpy B host-to-device");
+
+    // Row-major buffers represent the transposed matrices in column-major order:
+    // C^T = B^T * A^T, so cuBLAS multiplies B first and then A.
+    constexpr float alpha = 1.0f;
+    constexpr float beta = 0.0f;
+    CheckCublas(cublasSgemm(handle.get(),
+                            CUBLAS_OP_N,
+                            CUBLAS_OP_N,
+                            n,
+                            n,
+                            n,
+                            &alpha,
+                            deviceB.get(),
+                            n,
+                            deviceA.get(),
+                            n,
+                            &beta,
+                            deviceC.get(),
+                            n),
+                "cublasSgemm");
+
+    CheckCuda(cudaMemcpy(c.data(), deviceC.get(), bytes, cudaMemcpyDeviceToHost),
+              "cudaMemcpy C device-to-host");
+    return c;
+}
