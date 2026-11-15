@@ -1,0 +1,10 @@
+/home/crazyproger/sandbox/gpu-2026/3823B1PE4/1_gelu_omp/kaur_alexander/gelu_omp.cpp: In function ‘std::vector<float> GeluOMP(const std::vector<float>&)’:
+/home/crazyproger/sandbox/gpu-2026/3823B1PE4/1_gelu_omp/kaur_alexander/gelu_omp.cpp:15:4: error: expected ‘;’ before ‘float’
+   15 | pow
+      |    ^
+      |    ;
+   16 |         float inner = SQRT_2_OVER_PI * (x + GELU_COEF * x * x * x);
+      |         ~~~~~
+/home/crazyproger/sandbox/gpu-2026/3823B1PE4/1_gelu_omp/kaur_alexander/gelu_omp.cpp:18:50: error: ‘inner’ was not declared in this scope
+   18 |         output[i] = 0.5f * x * (1.0f + std::tanh(inner));
+      |                                                  ^~~~~
