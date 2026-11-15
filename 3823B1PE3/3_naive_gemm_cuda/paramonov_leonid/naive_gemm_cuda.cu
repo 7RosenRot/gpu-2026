@@ -1,3 +1,67 @@
+#include "naive_gemm_cuda.h"
+
+#include <cuda_runtime.h>
+
+#include <cstddef>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace {
+
+constexpr unsigned int kThreadsPerBlock = 256;
+constexpr unsigned int kMaxBlocks = 65535;
+
+void CheckCuda(cudaError_t error, const char* operation) {
+    if (error != cudaSuccess) {
+        throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(error));
+    }
+}
+
+class DeviceBuffer {
+public:
+    explicit DeviceBuffer(std::size_t bytes) {
+        CheckCuda(cudaMalloc(&pointer_, bytes), "cudaMalloc");
+    }
+
+    ~DeviceBuffer() {
+        if (pointer_ != nullptr) {
+            cudaFree(pointer_);
+        }
+    }
+
+    DeviceBuffer(const DeviceBuffer&) = delete;
+    DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+
+    float* get() const { return pointer_; }
+
+private:
+    float* pointer_ = nullptr;
+};
+
+__global__ void NaiveGemmKernel(const float* a,
+                                const float* b,
+                                float* c,
+                                std::size_t n,
+                                std::size_t elementCount) {
+    const std::size_t first = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    const std::size_t stride = static_cast<std::size_t>(blockDim.x) * gridDim.x;
+
+    for (std::size_t index = first; index < elementCount; index += stride) {
+        const std::size_t row = index / n;
+        const std::size_t column = index % n;
+        float sum = 0.0f;
+
+        for (std::size_t k = 0; k < n; ++k) {
+            sum += a[row * n + k] * b[k * n + column];
+        }
+
+        c[index] = sum;
+    }
+}
+
+} // namespace
 
 std::vector<float> NaiveGemmCUDA(const std::vector<float>& a,
                                  const std::vector<float>& b,
