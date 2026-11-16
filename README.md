@@ -821,6 +821,7 @@ std::vector<float> GeluOCL(const std::vector<float>& input, int platform) {
 |3823B1PE2|posternak_alexey|0.2497|11|
 |3823B1PE4|remizov_kirill|0.2508|6|
 |3823B1FI3|lifanov_kirill|0.2513|1|
+|3823B1PE3|paramonov_leonid|0.2523|9|
 |3823B1PE4|terekhov_dmitriy|0.2563|7|
 |3823B1PE1|zhurin_ivan|0.2596|14|
 |3823B1PE4|imanov_sabutay|0.2616|13|
@@ -844,7 +845,6 @@ std::vector<float> GeluOCL(const std::vector<float>& input, int platform) {
 |3823B1PE1|golovanov_daniil|0.2818|5|
 |3823B1PE2|olesnitskiy_vladimir|0.2886|9|
 |3823B1PE3|afanasyev_alexandr|0.2893|6|
-|3823B1PE3|paramonov_leonid|BUILD FAILED|-|
 
 ## 7_layernorm_pycuda (8192x16384 elements)
 |Group|Name|Result|Rank|
@@ -1043,20 +1043,20 @@ Passed: 9
 ## 3823B1PE3
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
-|3823B1PE3|afanasyev_alexandr|**8/8**|**397**|
+|3823B1PE3|afanasyev_alexandr|**8/8**|**396**|
 |3823B1PE3|balchunayte_zlata|5/8|247|
-|3823B1PE3|batkov_filipp|**8/8**|**429**|
+|3823B1PE3|batkov_filipp|**8/8**|**428**|
 |3823B1PE3|bortsova_angelina|**8/8**|**467**|
 |3823B1PE3|borunov_vladislav|5/8|268|
 |3823B1PE3|dergachev_arseniy|**8/8**|**488**|
 |3823B1PE3|ermakov_alexei|**8/8**|**467**|
 |3823B1PE3|korolev_kuzma|**8/8**|**404**|
 |3823B1PE3|marin_lev|**8/8**|**467**|
-|3823B1PE3|paramonov_leonid|7/8|322|
+|3823B1PE3|paramonov_leonid|**8/8**|**372**|
 |3823B1PE3|rastvorov_kirill|**8/8**|**464**|
 |3823B1PE3|shkenev_ilya|3/8|140|
 
-Passed: 8
+Passed: 9
 
 ## 3823B1PE4
 |Group|Name|Passed|Score|
@@ -1081,7 +1081,7 @@ Passed: 8
 
 Passed: 13
 
-**Total Passed: 50**
+**Total Passed: 51**
 
 ---
 *Maximum Score: 512 (64 per task)*
