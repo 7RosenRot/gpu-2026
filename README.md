@@ -580,6 +580,7 @@ std::vector<float> GeluOCL(const std::vector<float>& input, int platform) {
 |Group|Name|Result|Rank|
 |-----|----|------|----|
 |3823B1FI1|dorofeev_ivan|0.0268|2|
+|3823B1PE1|makoveeva_sofia|0.0305|16|
 |3823B1PE3|ermakov_alexei|0.0364|5|
 |3823B1PE4|dilshodov_adkham|0.0380|1|
 |3823B1PE2|viderman_aleksandra|0.0393|5|
@@ -1019,23 +1020,23 @@ Passed: 1
 ## 3823B1PE1
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
-|3823B1PE1|chernov_timur|**8/8**|**333**|
-|3823B1PE1|golovanov_daniil|**8/8**|**378**|
-|3823B1PE1|ivanova_polina|**8/8**|**396**|
-|3823B1PE1|kondrashova_victoria|**8/8**|**365**|
-|3823B1PE1|lazareva_ann|**8/8**|**357**|
-|3823B1PE1|makoveeva_sofia|2/8|99|
-|3823B1PE1|melnik_ivan|**8/8**|**386**|
+|3823B1PE1|chernov_timur|**8/8**|**332**|
+|3823B1PE1|golovanov_daniil|**8/8**|**377**|
+|3823B1PE1|ivanova_polina|**8/8**|**395**|
+|3823B1PE1|kondrashova_victoria|**8/8**|**364**|
+|3823B1PE1|lazareva_ann|**8/8**|**356**|
+|3823B1PE1|makoveeva_sofia|3/8|148|
+|3823B1PE1|melnik_ivan|**8/8**|**385**|
 |3823B1PE1|morozov_nikita|1/8|49|
-|3823B1PE1|otcheskov_semyon|**8/8**|**458**|
-|3823B1PE1|perepelkin_iaroslav|**8/8**|**456**|
-|3823B1PE1|popova_elizaveta|**8/8**|**330**|
-|3823B1PE1|redkina_alina|**8/8**|**463**|
-|3823B1PE1|rusakova_aleksandra|**8/8**|**459**|
-|3823B1PE1|shilin_nikita|**8/8**|**437**|
-|3823B1PE1|tabalaev_anton|**8/8**|**393**|
-|3823B1PE1|tsibareva_ekaterina|**8/8**|**370**|
-|3823B1PE1|zhurin_ivan|**8/8**|**365**|
+|3823B1PE1|otcheskov_semyon|**8/8**|**457**|
+|3823B1PE1|perepelkin_iaroslav|**8/8**|**455**|
+|3823B1PE1|popova_elizaveta|**8/8**|**329**|
+|3823B1PE1|redkina_alina|**8/8**|**462**|
+|3823B1PE1|rusakova_aleksandra|**8/8**|**458**|
+|3823B1PE1|shilin_nikita|**8/8**|**436**|
+|3823B1PE1|tabalaev_anton|**8/8**|**392**|
+|3823B1PE1|tsibareva_ekaterina|**8/8**|**369**|
+|3823B1PE1|zhurin_ivan|**8/8**|**364**|
 |3823B1PE1|zyazeva_svetlana|2/8|68|
 
 Passed: 15
