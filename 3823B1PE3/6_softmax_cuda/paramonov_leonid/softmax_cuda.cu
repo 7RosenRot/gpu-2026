@@ -1,128 +1,109 @@
 #include "softmax_cuda.h"
 
 #include <cuda_runtime.h>
+#include <cub/block/block_reduce.cuh>
+#include <math_constants.h>
 
 #include <cstddef>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
 namespace {
 
-constexpr unsigned int kMaxThreadsPerBlock = 1024;
-
-void CheckCuda(cudaError_t error, const char* operation) {
-    if (error != cudaSuccess) {
-        throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(error));
+void CheckCuda(cudaError_t status) {
+    if (status != cudaSuccess) {
+        throw std::runtime_error(cudaGetErrorString(status));
     }
 }
 
-class DeviceBuffer {
-public:
-    explicit DeviceBuffer(std::size_t bytes) {
-        CheckCuda(cudaMalloc(&pointer_, bytes), "cudaMalloc");
-    }
+struct DeviceBuffer {
+    float* data = nullptr;
 
     ~DeviceBuffer() {
-        if (pointer_ != nullptr) {
-            cudaFree(pointer_);
+        if (data != nullptr) {
+            cudaFree(data);
         }
     }
-
-    DeviceBuffer(const DeviceBuffer&) = delete;
-    DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-
-    float* get() const { return pointer_; }
-
-private:
-    float* pointer_ = nullptr;
 };
 
-__global__ void SoftmaxRowsKernel(const float* input,
-                                  float* output,
-                                  std::size_t row_size) {
-    __shared__ float reduction[kMaxThreadsPerBlock];
+struct Max {
+    __device__ float operator()(float a, float b) const {
+        return fmaxf(a, b);
+    }
+};
 
-    const unsigned int tid = threadIdx.x;
-    const std::size_t row_offset = static_cast<std::size_t>(blockIdx.x) * row_size;
+template <int BlockSize>
+__global__ void SoftmaxRows(float* matrix, std::size_t row_size, bool cache_row) {
+    using Reduce = cub::BlockReduce<float, BlockSize>;
+    __shared__ typename Reduce::TempStorage reduction;
+    __shared__ float row_max;
+    __shared__ float inverse_sum;
+    extern __shared__ float cached_row[];
+
+    float* row = matrix + static_cast<std::size_t>(blockIdx.x) * row_size;
+    float* values = cache_row ? cached_row : row;
+    const unsigned int lane = threadIdx.x;
 
     float local_max = -CUDART_INF_F;
-    for (std::size_t column = tid; column < row_size; column += blockDim.x) {
-        local_max = fmaxf(local_max, input[row_offset + column]);
-    }
-    reduction[tid] = local_max;
-    __syncthreads();
-
-    for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
-        if (tid < offset) {
-            reduction[tid] = fmaxf(reduction[tid], reduction[tid + offset]);
+    for (std::size_t col = lane; col < row_size; col += BlockSize) {
+        const float value = row[col];
+        if (cache_row) {
+            cached_row[col] = value;
         }
-        __syncthreads();
+        local_max = fmaxf(local_max, value);
     }
-    const float row_max = reduction[0];
+
+    const float max_value = Reduce(reduction).Reduce(local_max, Max{});
+    if (lane == 0) {
+        row_max = max_value;
+    }
+    __syncthreads();
 
     float local_sum = 0.0f;
-    for (std::size_t column = tid; column < row_size; column += blockDim.x) {
-        const float value = expf(input[row_offset + column] - row_max);
-        output[row_offset + column] = value;
+    for (std::size_t col = lane; col < row_size; col += BlockSize) {
+        const float value = expf(values[col] - row_max);
+        values[col] = value;
         local_sum += value;
     }
-    reduction[tid] = local_sum;
+
+    const float sum = Reduce(reduction).Sum(local_sum);
+    if (lane == 0) {
+        inverse_sum = 1.0f / sum;
+    }
     __syncthreads();
 
-    for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
-        if (tid < offset) {
-            reduction[tid] += reduction[tid + offset];
-        }
-        __syncthreads();
+    for (std::size_t col = lane; col < row_size; col += BlockSize) {
+        row[col] = values[col] * inverse_sum;
     }
-    const float row_sum = reduction[0];
-
-    for (std::size_t column = tid; column < row_size; column += blockDim.x) {
-        output[row_offset + column] /= row_sum;
-    }
-}
-
-unsigned int ChooseBlockSize(std::size_t row_size) {
-    unsigned int block_size = 1;
-    const std::size_t limit = row_size < kMaxThreadsPerBlock
-                                  ? row_size
-                                  : kMaxThreadsPerBlock;
-    while (static_cast<std::size_t>(block_size) * 2 <= limit) {
-        block_size *= 2;
-    }
-    return block_size;
 }
 
 } // namespace
 
 std::vector<float> SoftmaxCUDA(const std::vector<float>& input, int row_count) {
-    if (row_count <= 0) {
-        throw std::invalid_argument("row_count must be positive");
-    }
-    if (input.size() % static_cast<std::size_t>(row_count) != 0) {
-        throw std::invalid_argument("input size must be divisible by row_count");
+    if (row_count <= 0 || input.size() % row_count != 0) {
+        throw std::invalid_argument("Invalid row count");
     }
     if (input.empty()) {
         return {};
     }
 
-    const std::size_t row_size = input.size() / static_cast<std::size_t>(row_count);
-    std::vector<float> output(input.size());
+    const std::size_t row_size = input.size() / row_count;
     const std::size_t bytes = input.size() * sizeof(float);
-    DeviceBuffer deviceInput(bytes);
-    DeviceBuffer deviceOutput(bytes);
+    const bool cache_row = row_size <= 4096;
+    const std::size_t shared_bytes = cache_row ? row_size * sizeof(float) : 0;
 
-    CheckCuda(cudaMemcpy(deviceInput.get(), input.data(), bytes, cudaMemcpyHostToDevice),
-              "cudaMemcpy input host-to-device");
+    DeviceBuffer matrix;
+    CheckCuda(cudaMalloc(&matrix.data, bytes));
+    CheckCuda(cudaMemcpy(matrix.data, input.data(), bytes, cudaMemcpyHostToDevice));
 
-    const unsigned int block_size = ChooseBlockSize(row_size);
-    SoftmaxRowsKernel<<<static_cast<unsigned int>(row_count), block_size>>>(
-        deviceInput.get(), deviceOutput.get(), row_size);
-    CheckCuda(cudaGetLastError(), "SoftmaxRowsKernel launch");
+    if (row_size <= 128) {
+        SoftmaxRows<32><<<row_count, 32, shared_bytes>>>(matrix.data, row_size, cache_row);
+    } else {
+        SoftmaxRows<128><<<row_count, 128, shared_bytes>>>(matrix.data, row_size, cache_row);
+    }
+    CheckCuda(cudaGetLastError());
 
-    // The synchronous copy also waits for the kernel to finish.
-    CheckCuda(cudaMemcpy(output.data(), deviceOutput.get(), bytes, cudaMemcpyDeviceToHost),
-              "cudaMemcpy output device-to-host");
+    // Allocate host output while the kernel can still be running.
+    std::vector<float> output(input.size());
+    CheckCuda(cudaMemcpy(output.data(), matrix.data, bytes, cudaMemcpyDeviceToHost));
     return output;
 }
