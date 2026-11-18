@@ -930,6 +930,7 @@ std::vector<float> GeluOCL(const std::vector<float>& input, int platform) {
 |3823B1PE4|kamaletdinov_ramzan|0.1910|16|
 |3823B1FI2|rozenberg_alexey|0.1910|1|
 |3823B1PE2|sinev_artem|0.1980|4|
+|3823B1PE3|samoylenko_ilya|0.2040|12|
 |3823B1PE1|lazareva_ann|0.2180|9|
 |3823B1PE4|romanov_michail|0.2190|6|
 |3823B1PE3|afanasyev_alexandr|0.2430|7|
@@ -1078,7 +1079,7 @@ Passed: 9
 ## 3823B1PE3
 |Group|Name|Passed|Score|
 |-----|----|------|-----|
-|3823B1PE3|afanasyev_alexandr|**8/8**|**380**|
+|3823B1PE3|afanasyev_alexandr|**8/8**|**379**|
 |3823B1PE3|balchunayte_zlata|5/8|238|
 |3823B1PE3|batkov_filipp|**8/8**|**418**|
 |3823B1PE3|bortsova_angelina|**8/8**|**464**|
@@ -1089,7 +1090,7 @@ Passed: 9
 |3823B1PE3|marin_lev|**8/8**|**466**|
 |3823B1PE3|paramonov_leonid|**8/8**|**357**|
 |3823B1PE3|rastvorov_kirill|**8/8**|**462**|
-|3823B1PE3|samoylenko_ilya|6/8|255|
+|3823B1PE3|samoylenko_ilya|7/8|298|
 |3823B1PE3|shkenev_ilya|**8/8**|**380**|
 |3823B1PE3|smetanin_dmitriy|**8/8**|**359**|
 
